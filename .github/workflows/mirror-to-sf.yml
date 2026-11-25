@@ -1,0 +1,29 @@
+name: Mirror to SourceForge
+
+on:
+  push:
+    branches: ['*']
+    tags: ['*']
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 全履歴・全ブランチを取得
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SF_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H git.code.sf.net >> ~/.ssh/known_hosts
+
+      - name: Push to SourceForge
+        run: |
+          git remote add sourceforge ssh://koichi-szk@git.code.sf.net/p/pgxc-fdw/code
+          git push sourceforge --prune +refs/remotes/origin/*:refs/heads/*
+          git push sourceforge --tags --force
+
